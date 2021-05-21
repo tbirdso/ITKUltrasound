@@ -64,10 +64,13 @@ itkSpectra1DSupportWindowImageFilterTest(int argc, char * argv[])
   using SpectraSupportWindowFilterType = itk::Spectra1DSupportWindowImageFilter<ImageType>;
   SpectraSupportWindowFilterType::Pointer spectraSupportWindowFilter = SpectraSupportWindowFilterType::New();
   spectraSupportWindowFilter->SetInput(sideLines);
+  spectraSupportWindowFilter->SetFFTDirection(0);
+  spectraSupportWindowFilter->SetFFTDirection(1);
   ITK_TRY_EXPECT_NO_EXCEPTION(spectraSupportWindowFilter->Update());
 
   spectraSupportWindowFilter->Print(std::cout);
   spectraSupportWindowFilter->GetOutput()->GetMetaDataDictionary().Print(std::cout);
+  std::cout << spectraSupportWindowFilter->GetOutput()->GetLargestPossibleRegion() << std::endl;
 
   spectraSupportWindowFilter->SetStep(10);
   ITK_TRY_EXPECT_NO_EXCEPTION(spectraSupportWindowFilter->UpdateLargestPossibleRegion());

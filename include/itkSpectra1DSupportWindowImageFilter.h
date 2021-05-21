@@ -74,6 +74,18 @@ public:
   itkGetConstMacro(Step, SizeValueType);
   itkSetMacro(Step, SizeValueType);
 
+  /** Get the direction in which the FFT window is to be applied. */
+  itkGetConstMacro(FFTDirection, unsigned int);
+
+  /** Set the direction in which the FFT window is to be applied. */
+  itkSetClampMacro(FFTDirection, unsigned int, 0, ImageDimension - 1);
+
+  /** Get the direction in which nominal lines are retrieved. */
+  itkGetConstMacro(SideLineDirection, unsigned int);
+
+  /** Set the direction in which nominal lines are retrieved. */
+  itkSetClampMacro(SideLineDirection, unsigned int, 0, ImageDimension - 1);
+
 protected:
   Spectra1DSupportWindowImageFilter();
   virtual ~Spectra1DSupportWindowImageFilter(){};
@@ -94,6 +106,14 @@ protected:
 private:
   FFT1DSizeType m_FFT1DSize;
   SizeValueType m_Step;
+
+  /** Direction in which the filter is to be applied
+   * this should be in the range [0,ImageDimension-1]. */
+  unsigned int m_FFTDirection = 0;
+
+  /** Direction in which nominal lines should be retrieved to add to the window.
+   *  This should be in the range [0,ImageDimension-1]. */
+  unsigned int m_SideLineDirection = 1;
 };
 
 } // end namespace itk

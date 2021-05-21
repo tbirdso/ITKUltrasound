@@ -45,12 +45,12 @@ Spectra1DSupportWindowImageFilter<TInputImage>::GenerateOutputInformation()
 
   OutputImageRegionType              outputRegion = input->GetLargestPossibleRegion();
   typename OutputImageType::SizeType outputSize = outputRegion.GetSize();
-  outputSize[0] /= this->GetStep();
+  outputSize[this->GetFFTDirection()] /= this->GetStep();
   outputRegion.SetSize(outputSize);
   output->SetLargestPossibleRegion(outputRegion);
 
   typename OutputImageType::SpacingType outputSpacing = input->GetSpacing();
-  outputSpacing[0] *= this->GetStep();
+  outputSpacing[this->GetFFTDirection()] *= this->GetStep();
   output->SetSpacing(outputSpacing);
 
   MetaDataDictionary & dict = output->GetMetaDataDictionary();
@@ -81,7 +81,7 @@ Spectra1DSupportWindowImageFilter<TInputImage>::DynamicThreadedGenerateData(
   OutputIteratorType  outputIt(output, outputRegionForThread);
   const FFT1DSizeType fftSize = this->GetFFT1DSize();
   const SizeValueType sampleStep = this->GetStep();
-  if (inputLargestRegion.GetSize()[0] < fftSize)
+  if (inputLargestRegion.GetSize()[this->GetFFTDirection()] < fftSize)
   {
     itkExceptionMacro("Insufficient size in the FFT direction.");
   }
@@ -95,25 +95,28 @@ Spectra1DSupportWindowImageFilter<TInputImage>::DynamicThreadedGenerateData(
       const IndexType inputIndex = inputIt.GetIndex();
 
       IndexType lineIndex;
-      lineIndex[0] = inputIndex[0] - fftSize / 2;
-      if (lineIndex[0] < largestIndexStart[0])
+      lineIndex[this->GetFFTDirection()] = inputIndex[this->GetFFTDirection()] - fftSize / 2;
+      if (lineIndex[this->GetFFTDirection()] < largestIndexStart[this->GetFFTDirection()])
       {
-        lineIndex[0] = largestIndexStart[0];
+        lineIndex[this->GetFFTDirection()] = largestIndexStart[this->GetFFTDirection()];
       }
 
-      if (lineIndex[0] + fftSize > largestIndexStop[0])
+      if (lineIndex[this->GetFFTDirection()] + fftSize > largestIndexStop[this->GetFFTDirection()])
       {
-        lineIndex[0] = largestIndexStop[0] - fftSize;
+        lineIndex[this->GetFFTDirection()] = largestIndexStop[this->GetFFTDirection()] - fftSize;
       }
 
       const IndexValueType sideLines = static_cast<IndexValueType>(inputIt.Get());
-      for (IndexValueType line = inputIndex[1] - sideLines; line < inputIndex[1] + sideLines; ++line)
+      for (IndexValueType line = inputIndex[this->GetSideLineDirection()] - sideLines;
+           line < inputIndex[this->GetSideLineDirection()] + sideLines;
+           ++line)
       {
-        if (line < largestIndexStart[1] || line > largestIndexStop[1])
+        if (line < largestIndexStart[this->GetSideLineDirection()] ||
+            line > largestIndexStop[this->GetSideLineDirection()])
         {
           continue;
         }
-        lineIndex[1] = line;
+        lineIndex[this->GetSideLineDirection()] = line;
         supportWindow.push_back(lineIndex);
       }
       for (SizeValueType ii = 0; ii < sampleStep; ++ii)
