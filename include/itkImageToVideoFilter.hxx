@@ -19,6 +19,8 @@
 #define itkImageToVideoFilter_hxx
 
 #include "itkImageToVideoFilter.h"
+#include "itkExtractImageFilter.h"
+#include "itkPasteImageFilter.h"
 
 namespace itk
 {
@@ -99,18 +101,38 @@ template <typename TInputImage, typename TOutputVideoStream>
 void
 ImageToVideoFilter<TInputImage, TOutputVideoStream>::UpdateOutputInformation()
 {
-  // Call superclass's version
-  Superclass::UpdateOutputInformation();
+  // Override superclass
+  //Superclass::UpdateOutputInformation();
 
   // Get the input
   const InputImageType * input = this->GetInput();
 
   // Get first input frame's largest possible spatial region
-  SizeValueType               firstInputFrameNum = input->GetLargestPossibleTemporalRegion().GetFrameStart(); // FIXME
-  InputFrameSpatialRegionType inputRegion = input->GetFrameLargestPossibleSpatialRegion(firstInputFrameNum); //FIXME
+  InputRegionType             inputRegion = input->GetLargestPossibleRegion();
+
+  // Set temporal frame + duration from user-defined frame axis in input image
+  OutputTemporalRegionType outputTemporalRegion;
+  outputTemporalRegion.SetFrameStart(inputRegion.GetIndex(m_FrameIndex));
+  outputTemporalRegion.SetFrameDuration(inputRegion.GetSize(m_FrameIndex));
+  // TODO set real start and real duration
+  this->GetOutput()->SetLargestPossibleTemporalRegion(outputTemporalRegion);
+
+  // Set the output spatial region from the input image's largest spatial region,
+  // discarding along the user-defined image axis
+  OutputFrameSpatialRegionType outputSpatialRegion;
+  for (itk::IndexSizeType idx = 0; idx < InputRegionType::ImageDimension; idx++)
+  {
+    itk::IndexSizeType outputIdx;
+    if (idx != m_FrameIndex)
+    {
+      outputSpatialRegion.SetSize(outputIdx, inputRegion.GetSize(idx));
+      outputSpatialRegion.SetIndex(outputIdx, inputRegion.GetIndex(idx));
+      ++outputIdx;
+    }
+  }
 
   // Propagate this spatial region to output frames
-  this->GetOutput()->SetAllLargestPossibleSpatialRegions(inputRegion); // TODO
+  this->GetOutput()->SetAllLargestPossibleSpatialRegions(inputRegion);
 }
 
 //-PROTECTED METHODS-----------------------------------------------------------
@@ -132,7 +154,7 @@ template <typename TInputImage, typename TOutputVideoStream>
 TInputImage *
 ImageToVideoFilter<TInputImage, TOutputVideoStream>::GetInput(unsigned int idx)
 {
-  return static_cast<InputVideoStreamType *>(this->ProcessObject::GetInput(idx));
+  return static_cast<InputImageType *>(this->ProcessObject::GetInput(idx));
 }
 
 //
@@ -142,8 +164,10 @@ template <typename TInputImage, typename TOutputVideoStream>
 void
 ImageToVideoFilter<TInputImage, TOutputVideoStream>::GenerateOutputRequestedRegion(DataObject * output)
 {
-  // Call Superclass's version
-  Superclass::GenerateOutputRequestedRegion(output);
+  // Override superclass so that we can set output region from input image
+  //Superclass::GenerateOutputRequestedRegion(output);
+
+  this->GetOutput()->SetRequestedTemporalRegion(this->GetOutput()->GetLargestPossibleTemporalRegion());
 
   // Go through the requested temporal region and for any frame that doesn't
   // have a requested spatial region, set it to the largest possible
@@ -180,38 +204,9 @@ template <typename TInputImage, typename TOutputVideoStream>
 void
 ImageToVideoFilter<TInputImage, TOutputVideoStream>::GenerateInputRequestedRegion()
 {
-  // Call superclass's version to propagate temporal region
-  Superclass::GenerateInputRequestedRegion();
-
-  // Get the spatial region from the output frame
-  SizeValueType                outputStart = this->GetOutput()->GetRequestedTemporalRegion().GetFrameStart();
-  OutputFrameSpatialRegionType outputRegion = this->GetOutput()->GetFrameRequestedSpatialRegion(outputStart);
-
-  // Convert to input spatial region (TODO: handle dificult cases)
-  InputFrameSpatialRegionType inputRegion;
-  inputRegion.SetSize(outputRegion.GetSize());
-  inputRegion.SetIndex(outputRegion.GetIndex());
-
-  // Create input spatial regions for each frame of each input
-  for (unsigned int i = 0; i < this->GetNumberOfInputs(); ++i)
-  {
-    // Get the input and it's requeted temporal region
-    auto * input = dynamic_cast<InputVideoStreamType *>(this->ProcessObject::GetInput(i));
-    if (!input)
-    {
-      continue;
-    }
-    TemporalRegion inRequestedTemporalRegion = input->GetRequestedTemporalRegion();
-
-    // Loop over all frames in the temporal region
-    SizeValueType inputStart = inRequestedTemporalRegion.GetFrameStart();
-    SizeValueType numFrames = inRequestedTemporalRegion.GetFrameDuration();
-    for (SizeValueType j = inputStart; j < inputStart + numFrames; ++j)
-    {
-      // Set the requested spatial region on the input
-      input->SetFrameRequestedSpatialRegion(j, inputRegion);
-    }
-  }
+  // Update from largest possible input region
+  //Superclass::GenerateInputRequestedRegion();
+  this->GetInput()->SetRequestedRegion(this->GetInput()->GetLargestPossibleRegion());
 }
 
 //
@@ -221,9 +216,48 @@ template <typename TInputImage, typename TOutputVideoStream>
 void
 ImageToVideoFilter<TInputImage, TOutputVideoStream>::BeforeTemporalStreamingGenerateData()
 {
-  InputVideoStreamType * input = this->GetInput();
-  input->SetMinimumBufferSize(this->TemporalProcessObject::m_UnitInputNumberOfFrames);
+  //InputImageType * input = this->GetInput();
+  //input->SetMinimumBufferSize(this->TemporalProcessObject::m_UnitInputNumberOfFrames);
 }
+
+template <typename TInputImage, typename TOutputVideoStream>
+void
+ImageToVideoFilter<TInputImage, TOutputVideoStream>::GenerateData()
+{
+  // Rely on SuperClass implementation to allocate output frames
+  this->AllocateOutputs();
+
+  // Set each frame in output to an image slice in the input image
+  InputImageType * input = this->GetInput();
+  InputRegionType inputRegion = input->GetLargestPossibleRegion();
+
+  OutputVideoStreamType* output = this->GetOutput();
+  SizeValueType           outputStartFrame = output->GetRequestedTemporalRegion().GetFrameStart();
+  SizeValueType          outputDuration = output->GetRequestedTemporalRegion().GetFrameDuration();
+  for (auto idx = outputStartFrame; idx < outputStartFrame + outputDuration; idx++)
+  {
+    InputRegionType inputSliceRegion = inputRegion;
+    sliceRegion.SetSize(m_FrameAxis, 1);
+    sliceRegion.SetIndex(m_FrameAxis, idx);
+
+    OutputFrameSpatialRegionType outputRegion = output->GetFrameBufferedSpatialRegion(idx);
+
+    using ExtractFilterType = itk::ExtractImageFilter<InputImageType, OutputFrameType>;
+    ExtractFilterType::Pointer extractFilter = ExtractFilterType::New();
+    extractFilter->SetDirectionCollapseToSubmatrix();
+
+    extractFilter->SetInput(input);
+    extractFilter->SetExtractionRegion(inputSliceRegion);
+
+    using PasteFilterType = itk::PasteImageFilter<OutputFrameType, OutputFrameType>;
+    PasteFilterType::Pointer pasteFilter = PasteFilterType::New();
+    pasteFilter->SetSourceImage(extractFilter->GetOutput());
+    pasteFilter->SetDestinationImage(output->GetFrame(idx));
+    pasteFilter->SetDestinationIndex(outputRegion->GetIndex());
+    pasteFilter->Update();
+  }
+}
+
 
 } // end namespace itk
 

@@ -18,8 +18,10 @@
 #ifndef itkImageToVideoFilter_h
 #define itkImageToVideoFilter_h
 
+#include "itkImage.h"
 #include "itkVideoSource.h"
 #include "itkVideoStream.h"
+#include "itkTemporalRegion.h"
 #include "itkMacro.h"
 
 namespace itk
@@ -42,7 +44,8 @@ namespace itk
  *
  * \ingroup ITKVideoCore
  */
-template <typename TInputImage, typename TOutputVideoStream>
+template <typename TInputImage,
+  typename TOutputVideoStream = itk::VideoStream<itk::Image<typename TInputImage::PixelType, TInputImage::ImageDimension - 1>>>
 class ITK_TEMPLATE_EXPORT ImageToVideoFilter : public VideoSource<TOutputVideoStream>
 {
 public:
@@ -51,15 +54,16 @@ public:
   /** Standard class type aliases */
   using InputImageType = TInputImage;
   using OutputVideoStreamType = TOutputVideoStream;
-  using Self = VideoToVideoFilter<InputVideoStreamType, OutputVideoStreamType>;
+  using Self = ImageToVideoFilter<InputImageType, OutputVideoStreamType>;
   using Superclass = VideoSource<OutputVideoStreamType>;
   using Pointer = SmartPointer<Self>;
   using ConstPointer = SmartPointer<const Self>;
   using ConstWeakPointer = WeakPointer<const Self>;
 
-  /** Superclass type alias */
+  /** Output type alias */
   using OutputFrameType = typename Superclass::OutputFrameType;
   using OutputFrameSpatialRegionType = typename Superclass::OutputFrameSpatialRegionType;
+  using OutputTemporalRegionType = typename TOutputVideoStream::TemporalRegionType;
 
   /** Input type alias */
   using InputImageType = TInputImage;
@@ -99,8 +103,15 @@ public:
   void
   UpdateOutputInformation() override;
 
+  /** Allow the user to set the default axis in the input image that will
+   *  correspond to the temporal axis in the output temporal object. */
   itkGetMacro(FrameAxis, InputImageIndexType);
   itkSetMacro(FrameAxis, InputImageIndexType);
+
+  /** TODO: Set requested output region */
+  itkGetMacro(RequestedTemporalRegion, TemporalRegion);
+  itkSetMacro(RequestedTemporalRegion, TemporalRegion);
+
 
 protected:
   /** Get a non-const version of the input for internal use when setting
@@ -141,6 +152,7 @@ protected:
 
 private:
   typename InputImageIndexType m_FrameDirection;
+  
 }; // end class ImageToVideoFilter
 
 } // end namespace itk
