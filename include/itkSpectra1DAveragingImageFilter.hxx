@@ -18,7 +18,7 @@
 #ifndef itkSpectra1DAveragingImageFilter_hxx
 #define itkSpectra1DAveragingImageFilter_hxx
 
-#include "itkImageRegionIteratorWithIndex.h"
+#include "itkImageScanlineIterator.h"
 #include "itkDivideImageFilter.h"
 #include "itkTotalProgressReporter.h"
 
@@ -120,7 +120,7 @@ Spectra1DAveragingImageFilter<TInputImage, TOutputImage>::GenerateData()
     }
   }
 
-  TotalProgressReporter progress(this, lineCount*depthSize);
+  TotalProgressReporter progress(this, lineCount);
 
   // now go through all the inputs and add them to the output
   for (InputDataObjectConstIterator it(this); !it.IsAtEnd(); ++it)
@@ -132,17 +132,23 @@ Spectra1DAveragingImageFilter<TInputImage, TOutputImage>::GenerateData()
       inRegion = input->GetLargestPossibleRegion();
       input->Update(); // this will trigger reading from file if not already in memory
 
+      typename OutputImageType::IndexType ind1{ 0 }; // initialize all indices zero
+
       // parallelizing while ensuring correct concurrent writes into the output is tricky
       // as this is probably going to be memory-access limited, just do it single-threaded
-      itk::ImageRegionConstIteratorWithIndex<InputImageType> iIt(input, inRegion);
-      for (; !iIt.IsAtEnd(); ++iIt)
+      itk::ImageScanlineIterator<InputImageType> iIt(input, inRegion);
+      while (!iIt.IsAtEnd())
       {
-        typename OutputImageType::IndexType ind1{ 0 }; // all indices zero
-        ind1[0] = iIt.GetIndex()[0];                   // except the index along depth dimension
+        while (!iIt.IsAtEndOfLine())
+        {
+          ind1[0] = iIt.GetIndex()[0]; // set the index along the depth dimension
 
-        OutputPixelType p = output->GetPixel(ind1);
-        p = p + iIt.Get();
-        output->SetPixel(ind1, p);
+          OutputPixelType p = output->GetPixel(ind1);
+          p = p + iIt.Get();
+          output->SetPixel(ind1, p);
+
+          ++iIt;
+        }
 
         progress.CompletedPixel();
       }
