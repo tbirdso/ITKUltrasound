@@ -17,6 +17,7 @@ set(UltrasoundTests
   itkSpectra1DImageFilterTest.cxx
   itkSpectra1DSupportWindowImageFilterTest.cxx
   itkSpectra1DSupportWindowToMaskImageFilterTest.cxx
+  itkSpectra1DAveragingImageFilterTest.cxx
   itkTimeGainCompensationImageFilterTest.cxx
   itkInverse1DFFTImageFilterTest.cxx
   itkComplexToComplex1DFFTImageFilterTest.cxx
@@ -124,6 +125,17 @@ itk_add_test(NAME itkSpectra1DSupportWindowToMaskImageFilterTest2
     DATA{Input/uniform_phantom_8.9_MHz.mha}
     ${ITK_TEST_OUTPUT_DIR}/itkSpectra1DSupportWindowToMaskImageFilterTest2.mha
     100 100
+    )
+itk_add_test(NAME itkSpectra1DAveragingImageFilterTest
+  COMMAND UltrasoundTestDriver
+    --compare
+    DATA{Baseline/itkSpectra1DAveragingImageFilterTest.mha}
+    ${ITK_TEST_OUTPUT_DIR}/itkSpectra1DAveragingImageFilterTest.mha
+  itkSpectra1DAveragingImageFilterTest
+    ${ITK_TEST_OUTPUT_DIR}/itkSpectra1DAveragingImageFilterTest.mha
+    DATA{Input/rf_voltage_15_freq_0005000000_2017-5-31_12-36-44_ReferenceSpectrum_side_lines_03_fft1d_size_128.mha}
+    DATA{Input/rf_voltage_15_freq_0005000000_2017-5-31_12-36-44_ReferenceSpectrum_side_lines_03_fft1d_size_128.mha}
+    DATA{Input/rf_voltage_15_freq_0005000000_2017-5-31_12-36-44_ReferenceSpectrum_side_lines_03_fft1d_size_128.mha}
     )
 itk_add_test(NAME itkTimeGainCompensationImageFilterTest
   COMMAND UltrasoundTestDriver
