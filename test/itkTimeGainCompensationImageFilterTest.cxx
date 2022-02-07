@@ -18,6 +18,7 @@
 
 #include "itkTimeGainCompensationImageFilter.h"
 #include "itkCurvilinearArraySpecialCoordinatesImage.h"
+#include "itkCurvilinearArraySpecialCoordinatesFFTImageFilterFactory.h"
 #include "itkBModeImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
@@ -46,6 +47,9 @@ itkTimeGainCompensationImageFilterTest(int argc, char * argv[])
   using RealPixelType = float;
   using RealImageType = itk::CurvilinearArraySpecialCoordinatesImage<RealPixelType, Dimension>;
   using ScanConvertedImageType = itk::Image<RealPixelType, Dimension>;
+
+  using FFTFactoryType = itk::CurvilinearArraySpecialCoordinatesFFTImageFilterFactory<itk::VnlForward1DFFTImageFilter>;
+  FFTFactoryType::RegisterOneFactory();
 
   using ReaderType = itk::ImageFileReader<IntegerImageType>;
   ReaderType::Pointer reader = ReaderType::New();
