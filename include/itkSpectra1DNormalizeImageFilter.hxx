@@ -31,66 +31,57 @@ Spectra1DNormalizeImageFilter<TInputImage, TReferenceImage>::GenerateInputReques
   // call the superclass' implementation of this method
   Superclass::GenerateInputRequestedRegion();
 
-  typename ReferenceImageType::Pointer reference = const_cast<ReferenceImageType *>(this->GetInput(1));
+  auto * in1 = reinterpret_cast<const ReferenceImageType *>(this->GetInput(1));
+  auto * reference = const_cast<ReferenceImageType *>(in1);
   // instead of fiddling with cropping the requested region to reference line,
   // we simply request the entire reference line
   reference->SetRequestedRegionToLargestPossibleRegion();
 }
 
+#define VectorDivideOperator(TypeA, TypeB)                             \
+  template <typename TScalarA, typename TScalarB, unsigned VDimension> \
+  TypeA operator/(const TypeA & a, const TypeB & b)                    \
+  {                                                                    \
+    TypeA result{ a };                                                 \
+    for (unsigned i = 0; i < VDimension; ++i)                          \
+    {                                                                  \
+      if (b[i] == 0)                                                   \
+      {                                                                \
+        result[i] = 0;                                                 \
+      }                                                                \
+      else                                                             \
+      {                                                                \
+        result[i] /= b[i];                                             \
+      }                                                                \
+    }                                                                  \
+    return result;                                                     \
+  }                                                                    \
+  ITK_NOOP_STATEMENT
 
-template <typename TScalarA, typename TScalarB, unsigned VDimension>
-Vector<TScalarA, VDimension>
-operator/(const Vector<TScalarA, VDimension> & a, const VariableLengthVector<TScalarB> & b)
-{
-  Vector<TScalarA, VDimension> result{ a };
-  for (unsigned i = 0; i < VDimension; ++i)
-  {
-    if (b[i] == 0)
-    {
-      result[i] = 0;
-    }
-    else
-    {
-      result[i] /= b[i];
-    }
-  }
-  return result;
-}
+// TypeA nor TypeB can have a comma in their specification
+// because commas are used to separate macro arguments
+#define ITK_COMMA ,
 
-template <typename TScalarA, typename TScalarB, unsigned VDimension>
-VariableLengthVector<TScalarA>
-operator/(const VariableLengthVector<TScalarA> & a, const Vector<TScalarB, VDimension> & b)
-{
-  VariableLengthVector<TScalarA> result{ a };
-  for (unsigned i = 0; i < VDimension; ++i)
-  {
-    if (b[i] == 0)
-    {
-      result[i] = 0;
-    }
-    else
-    {
-      result[i] /= b[i];
-    }
-  }
-  return result;
-}
+VectorDivideOperator(Vector<TScalarA ITK_COMMA VDimension>, VariableLengthVector<TScalarB>);
+VectorDivideOperator(VariableLengthVector<TScalarA>, Vector<TScalarB ITK_COMMA VDimension>);
+VectorDivideOperator(Vector<TScalarA ITK_COMMA VDimension>, Vector<TScalarB ITK_COMMA VDimension>);
+VectorDivideOperator(VariableLengthVector<TScalarA>, VariableLengthVector<TScalarB>);
 
 template <typename TInputImage, typename TReferenceImage>
 void
 Spectra1DNormalizeImageFilter<TInputImage, TReferenceImage>::DynamicThreadedGenerateData(
   const OutputImageRegionType & outputRegionForThread)
 {
-  const InputImageType *     input = this->GetInput();
-  const ReferenceImageType * reference = this->GetInput(1);
-  OutputImageType *          output = this->GetOutput();
+  const InputImageType * input = this->GetInput();
+  const auto *           reference = reinterpret_cast<const ReferenceImageType *>(this->GetInput(1));
+  OutputImageType *      output = this->GetOutput();
 
   TotalProgressReporter progress(this, output->GetRequestedRegion().GetNumberOfPixels());
 
   MultiThreaderBase * multiThreader = this->GetMultiThreader();
   multiThreader->SetNumberOfWorkUnits(this->GetNumberOfWorkUnits());
 
-  typename ReferenceImageType::IndexType ind1{ 0 }; // initialize all indices zero
+  typename ReferenceImageType::IndexType ind1{ 0 }; // initialize all indices to zero
 
   ImageScanlineConstIterator<InputImageType> iIt(input, outputRegionForThread);
   ImageScanlineIterator<OutputImageType>     oIt(output, outputRegionForThread);

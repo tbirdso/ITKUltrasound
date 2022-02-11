@@ -53,7 +53,7 @@ public:
   itkNewMacro(Self);
 
 protected:
-  Spectra1DNormalizeImageFilter() { this->SetNumberOfRequiredInputs(2); }
+  Spectra1DNormalizeImageFilter() { this->AddRequiredInputName("ReferenceImage", 1); }
   ~Spectra1DNormalizeImageFilter() override = default;
 
   void

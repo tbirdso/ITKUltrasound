@@ -23,7 +23,7 @@
 #include "itkVectorImage.h"
 #include "itkTestingMacros.h"
 #include "itkSimpleFilterWatcher.h"
-#include "itkSpectra1DAveragingImageFilter.h"
+#include "itkSpectra1DNormalizeImageFilter.h"
 #include "itkMath.h"
 
 // this does not work for VectorImage, only for Image<Vector> due to:
@@ -48,7 +48,7 @@ compareBuffers(TInImage1 * baseline, TInImage2 * test)
   {
     for (unsigned d = 0; d < TInImage1::PixelType::Dimension; ++d)
     {
-      if (!itk::Math::FloatAlmostEqual(bufferBaseline[p][d], bufferTest[p][d], lineCount, 1e-4))
+      if (!itk::Math::AlmostEquals(bufferBaseline[p][d], bufferTest[p][d]))
       {
         ++differentPixels;
         std::cout << "Images differ at " << p << "[" << d << "]: " << bufferBaseline[p][d] << " vs " << bufferTest[p][d]
@@ -64,48 +64,41 @@ compareBuffers(TInImage1 * baseline, TInImage2 * test)
   }
 }
 
-template <typename TInImage, typename TOutImage>
+template <typename TInImage, typename TReferenceImage>
 int
-doTest(int argc, char * argv[], itk::SmartPointer<TOutImage> & output)
+doTest(const char *                  inFileName,
+       const char *                  refFileName,
+       const char *                  outFileName,
+       itk::SmartPointer<TInImage> & output)
 {
-  using AverageFilterType = itk::Spectra1DAveragingImageFilter<TInImage, TOutImage>;
-  AverageFilterType::Pointer averageFilter = AverageFilterType::New();
+  using AverageFilterType = itk::Spectra1DNormalizeImageFilter<TInImage, TReferenceImage>;
+  auto averageFilter = AverageFilterType::New();
 
   itk::SimpleFilterWatcher watcher(averageFilter);
 
-  for (int i = 2; i < argc; ++i)
-  {
-    using ReaderType = itk::ImageFileReader<TInImage>;
-    ReaderType::Pointer reader = ReaderType::New();
-    reader->SetFileName(argv[i]);
-    averageFilter->SetInput(i - 2, reader->GetOutput());
+  auto inImage = itk::ReadImage<TInImage>(inFileName);
+  auto refImage = itk::ReadImage<TReferenceImage>(refFileName);
 
-    // it should not be necessary to do this here, the filter is supposed to call this when it needs this input
-    ITK_TRY_EXPECT_NO_EXCEPTION(reader->Update());
-  }
+  averageFilter->SetInput(0, inImage);
+  averageFilter->SetInput("ReferenceImage", refImage);
 
   ITK_TRY_EXPECT_NO_EXCEPTION(averageFilter->Update());
   output = averageFilter->GetOutput();
   return EXIT_SUCCESS;
 }
 
-template <typename TInImage, typename TOutImage>
-itk::SmartPointer<TOutImage>
-createReference(int argc, char * argv[])
+template <typename TInImage, typename TReferenceImage>
+itk::SmartPointer<TInImage>
+createReference(const char * inFileName, const char * refFileName, const char * outFileName)
 {
-  using AverageFilterType = itk::Spectra1DAveragingImageFilter<TInImage, TOutImage>;
+  using AverageFilterType = itk::Spectra1DNormalizeImageFilter<TInImage, TReferenceImage>;
   auto averageFilter = AverageFilterType::New();
 
-  for (int i = 2; i < argc; ++i)
-  {
-    using ReaderType = itk::ImageFileReader<TInImage>;
-    ReaderType::Pointer reader = ReaderType::New();
-    reader->SetFileName(argv[i]);
-    averageFilter->SetInput(i - 2, reader->GetOutput());
+  auto inImage = itk::ReadImage<TInImage>(inFileName);
+  const auto refImage = itk::ReadImage<TReferenceImage>(refFileName);
 
-    // it should not be necessary to do this here, the filter is supposed to call this when it needs this input
-    reader->Update();
-  }
+  averageFilter->SetInput(inImage);
+  averageFilter->SetInput("ReferenceImage", refImage.GetPointer());
 
   averageFilter->Update();
   return averageFilter->GetOutput();
@@ -113,23 +106,26 @@ createReference(int argc, char * argv[])
 
 
 int
-itkSpectra1DAveragingImageFilterTest(int argc, char * argv[])
+itkSpectra1DNormalizeImageFilterTest(int argc, char * argv[])
 {
-  if (argc < 3)
+  if (argc < 4)
   {
     std::cerr << "Usage: " << itkNameOfTestExecutableMacro(argv);
-    std::cerr << " outputImage inputImage [inputImage ...]";
+    std::cerr << " inputImage referenceImage outputImage";
     std::cerr << std::endl;
     return EXIT_FAILURE;
   }
-  const char * inFileName = argv[2];
+  const char * inFileName = argv[1];
+  const char * refFileName = argv[2];
+  const char * outFileName = argv[3];
 
   const unsigned Channels = 31;
 
   int returnCount = 0;
 
+  using VI2d = itk::VectorImage<double, 2>;
+  using IV2d = itk::Image<itk::Vector<double, Channels>, 2>;
 
-  using IV3f = itk::Image<itk::Vector<float, Channels>, 3>;
   using IV2f = itk::Image<itk::Vector<float, Channels>, 2>;
   using IV1f = itk::Image<itk::Vector<float, Channels>, 1>;
   using VI3f = itk::VectorImage<float, 3>;
@@ -137,40 +133,44 @@ itkSpectra1DAveragingImageFilterTest(int argc, char * argv[])
   using VI1f = itk::VectorImage<float, 1>;
 
   IV2f::Pointer testIV2;
-  IV1f::Pointer testIV1;
+  VI3f::Pointer testVI3;
   VI2f::Pointer testVI2;
-  VI1f::Pointer testVI1;
+  VI2d::Pointer testVI2d;
+  IV2d::Pointer testIV2d;
 
   // create reference result - all other images will be compared to this one
-  IV1f::Pointer reference = createReference<IV2f, IV1f>(argc, argv);
+  IV2f::Pointer reference = createReference<IV2f, IV1f>(inFileName, refFileName, outFileName);
 
   // now test different dimensionality
-  returnCount += doTest<VI3f, VI2f>(argc, argv, testVI2);
-  returnCount += doTest<VI3f, VI1f>(argc, argv, testVI1);
+  returnCount += doTest<VI3f, VI2f>(inFileName, refFileName, outFileName, testVI3);
+  returnCount += doTest<VI3f, VI1f>(inFileName, refFileName, outFileName, testVI3);
 
   // test all 4 combinations (VI x IV) with same dimensionality
-  returnCount += doTest<VI2f, VI2f>(argc, argv, testVI2);
+  returnCount += doTest<VI2f, VI2f>(inFileName, refFileName, outFileName, testVI2);
   // compareBuffers(reference.GetPointer(), testVI2.GetPointer()); // does not compile
-  returnCount += doTest<VI2f, IV2f>(argc, argv, testIV2);
+  returnCount += doTest<VI2f, IV2f>(inFileName, refFileName, outFileName, testVI2);
+  compareBuffers(reference.GetPointer(), testIV2.GetPointer()); // does not compile
+  returnCount += doTest<IV2f, VI2f>(inFileName, refFileName, outFileName, testIV2);
   compareBuffers(reference.GetPointer(), testIV2.GetPointer());
-  returnCount += doTest<IV2f, VI2f>(argc, argv, testVI2);
-  returnCount += doTest<IV2f, IV2f>(argc, argv, testIV2);
+  returnCount += doTest<IV2f, IV2f>(inFileName, refFileName, outFileName, testIV2);
   compareBuffers(reference.GetPointer(), testIV2.GetPointer());
 
   // all (VI x IV) combinations with dimensionality 2 -> 1
-  returnCount += doTest<VI2f, VI1f>(argc, argv, testVI1);
-  returnCount += doTest<VI2f, IV1f>(argc, argv, testIV1);
-  compareBuffers(reference.GetPointer(), testIV1.GetPointer());
-  returnCount += doTest<IV2f, VI1f>(argc, argv, testVI1);
-  returnCount += doTest<IV2f, IV1f>(argc, argv, testIV1);
-  compareBuffers(reference.GetPointer(), testIV1.GetPointer());
+  returnCount += doTest<VI2f, VI1f>(inFileName, refFileName, outFileName, testVI2);
+  returnCount += doTest<VI2f, IV1f>(inFileName, refFileName, outFileName, testVI2);
+  // compareBuffers(reference.GetPointer(), testVI2.GetPointer()); // does not compile
+  returnCount += doTest<IV2f, VI1f>(inFileName, refFileName, outFileName, testIV2);
+  compareBuffers(reference.GetPointer(), testIV2.GetPointer());
+  returnCount += doTest<IV2f, IV1f>(inFileName, refFileName, outFileName, testIV2);
+  compareBuffers(reference.GetPointer(), testIV2.GetPointer());
 
   // test float/double
-  returnCount += doTest<itk::VectorImage<double, 2>, IV1f>(argc, argv, testIV1);
+  returnCount += doTest<VI2d, IV1f>(inFileName, refFileName, outFileName, testVI2d);
+  // compareBuffers(reference.GetPointer(), testVI2d.GetPointer()); // does not compile
 
   // the next line requires ITK 5.3 or later
-  returnCount += doTest<itk::Image<itk::Vector<double, Channels>, 2>, IV1f>(argc, argv, testIV1);
-  compareBuffers(reference.GetPointer(), testIV1.GetPointer());
+  returnCount += doTest<IV2d, IV1f>(inFileName, refFileName, outFileName, testIV2d);
+  compareBuffers(reference.GetPointer(), testIV2d.GetPointer());
 
   ITK_TRY_EXPECT_NO_EXCEPTION(itk::WriteImage(reference, argv[1], true));
 
