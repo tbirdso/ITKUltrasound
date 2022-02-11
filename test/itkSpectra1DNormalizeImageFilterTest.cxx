@@ -142,23 +142,23 @@ itkSpectra1DNormalizeImageFilterTest(int argc, char * argv[])
   IV2f::Pointer reference = createReference<IV2f, IV1f>(inFileName, refFileName, outFileName);
 
   // now test different dimensionality
-  returnCount += doTest<VI3f, VI2f>(inFileName, refFileName, outFileName, testVI3);
-  returnCount += doTest<VI3f, VI1f>(inFileName, refFileName, outFileName, testVI3);
-
-  // test all 4 combinations (VI x IV) with same dimensionality
-  returnCount += doTest<VI2f, VI2f>(inFileName, refFileName, outFileName, testVI2);
-  // compareBuffers(reference.GetPointer(), testVI2.GetPointer()); // does not compile
+//  returnCount += doTest<VI3f, VI2f>(inFileName, refFileName, outFileName, testVI3);
+//  returnCount += doTest<VI3f, VI1f>(inFileName, refFileName, outFileName, testVI3);
+//
+//  // test all 4 combinations (VI x IV) with same dimensionality
+//  returnCount += doTest<VI2f, VI2f>(inFileName, refFileName, outFileName, testVI2);
+//  // compareBuffers(reference.GetPointer(), testVI2.GetPointer()); // does not compile
   returnCount += doTest<VI2f, IV2f>(inFileName, refFileName, outFileName, testVI2);
-  compareBuffers(reference.GetPointer(), testIV2.GetPointer()); // does not compile
+  // compareBuffers(reference.GetPointer(), testVI2.GetPointer()); // does not compile
   returnCount += doTest<IV2f, VI2f>(inFileName, refFileName, outFileName, testIV2);
   compareBuffers(reference.GetPointer(), testIV2.GetPointer());
   returnCount += doTest<IV2f, IV2f>(inFileName, refFileName, outFileName, testIV2);
   compareBuffers(reference.GetPointer(), testIV2.GetPointer());
-
-  // all (VI x IV) combinations with dimensionality 2 -> 1
-  returnCount += doTest<VI2f, VI1f>(inFileName, refFileName, outFileName, testVI2);
+//
+//  // all (VI x IV) combinations with dimensionality 2 -> 1
+//  returnCount += doTest<VI2f, VI1f>(inFileName, refFileName, outFileName, testVI2);
   returnCount += doTest<VI2f, IV1f>(inFileName, refFileName, outFileName, testVI2);
-  // compareBuffers(reference.GetPointer(), testVI2.GetPointer()); // does not compile
+//  // compareBuffers(reference.GetPointer(), testVI2.GetPointer()); // does not compile
   returnCount += doTest<IV2f, VI1f>(inFileName, refFileName, outFileName, testIV2);
   compareBuffers(reference.GetPointer(), testIV2.GetPointer());
   returnCount += doTest<IV2f, IV1f>(inFileName, refFileName, outFileName, testIV2);

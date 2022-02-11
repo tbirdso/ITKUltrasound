@@ -38,18 +38,14 @@ Spectra1DNormalizeImageFilter<TInputImage, TReferenceImage>::GenerateInputReques
   reference->SetRequestedRegionToLargestPossibleRegion();
 }
 
-#define VectorDivideOperator(TypeA, TypeB)                             \
+#define DeclareVectorDivideOperator(TypeA, TypeB)                      \
   template <typename TScalarA, typename TScalarB, unsigned VDimension> \
   TypeA operator/(const TypeA & a, const TypeB & b)                    \
   {                                                                    \
     TypeA result{ a };                                                 \
     for (unsigned i = 0; i < VDimension; ++i)                          \
     {                                                                  \
-      if (b[i] == 0)                                                   \
-      {                                                                \
-        result[i] = 0;                                                 \
-      }                                                                \
-      else                                                             \
+      if (b[i] != 0) /* else implicitly assume b[i] == 1.0 */          \
       {                                                                \
         result[i] /= b[i];                                             \
       }                                                                \
@@ -62,10 +58,10 @@ Spectra1DNormalizeImageFilter<TInputImage, TReferenceImage>::GenerateInputReques
 // because commas are used to separate macro arguments
 #define ITK_COMMA ,
 
-VectorDivideOperator(Vector<TScalarA ITK_COMMA VDimension>, VariableLengthVector<TScalarB>);
-VectorDivideOperator(VariableLengthVector<TScalarA>, Vector<TScalarB ITK_COMMA VDimension>);
-VectorDivideOperator(Vector<TScalarA ITK_COMMA VDimension>, Vector<TScalarB ITK_COMMA VDimension>);
-VectorDivideOperator(VariableLengthVector<TScalarA>, VariableLengthVector<TScalarB>);
+DeclareVectorDivideOperator(Vector<TScalarA ITK_COMMA VDimension>, VariableLengthVector<TScalarB>);
+DeclareVectorDivideOperator(VariableLengthVector<TScalarA>, Vector<TScalarB ITK_COMMA VDimension>);
+DeclareVectorDivideOperator(Vector<TScalarA ITK_COMMA VDimension>, Vector<TScalarB ITK_COMMA VDimension>);
+DeclareVectorDivideOperator(VariableLengthVector<TScalarA>, VariableLengthVector<TScalarB>);
 
 template <typename TInputImage, typename TReferenceImage>
 void
