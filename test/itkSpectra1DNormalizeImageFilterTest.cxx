@@ -172,7 +172,7 @@ itkSpectra1DNormalizeImageFilterTest(int argc, char * argv[])
   returnCount += doTest<IV2d, IV1f>(inFileName, refFileName, outFileName, testIV2d);
   compareBuffers(reference.GetPointer(), testIV2d.GetPointer());
 
-  ITK_TRY_EXPECT_NO_EXCEPTION(itk::WriteImage(reference, argv[1], true));
+  ITK_TRY_EXPECT_NO_EXCEPTION(itk::WriteImage(reference, outFileName, false));
 
   if (returnCount != 12 * EXIT_SUCCESS)
   {

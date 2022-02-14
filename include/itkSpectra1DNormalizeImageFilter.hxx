@@ -31,7 +31,9 @@ Spectra1DNormalizeImageFilter<TInputImage, TReferenceImage>::GenerateInputReques
   // call the superclass' implementation of this method
   Superclass::GenerateInputRequestedRegion();
 
-  auto * in1 = reinterpret_cast<const ReferenceImageType *>(this->GetInput(1));
+  // ImageToImageFilter expects all inputs to be of TInputImage type
+  // so we don't use this->GetInput(), instead we use ProcessObject directly
+  auto * in1 = reinterpret_cast<const ReferenceImageType *>(this->ProcessObject::GetInput(1));
   auto * reference = const_cast<ReferenceImageType *>(in1);
   // instead of fiddling with cropping the requested region to reference line,
   // we simply request the entire reference line
@@ -69,7 +71,7 @@ Spectra1DNormalizeImageFilter<TInputImage, TReferenceImage>::DynamicThreadedGene
   const OutputImageRegionType & outputRegionForThread)
 {
   const InputImageType * input = this->GetInput();
-  const auto *           reference = reinterpret_cast<const ReferenceImageType *>(this->GetInput(1));
+  const auto *           reference = reinterpret_cast<const ReferenceImageType *>(this->ProcessObject::GetInput(1));
   OutputImageType *      output = this->GetOutput();
 
   TotalProgressReporter progress(this, output->GetRequestedRegion().GetNumberOfPixels());
