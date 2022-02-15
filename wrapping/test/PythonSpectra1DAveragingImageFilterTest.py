@@ -29,7 +29,7 @@ itk.auto_progress(2)
 
 PixelType = itk.VariableLengthVector[itk.F]
 ImageDimension = 2
-ImageType = itk.Image[PixelType, ImageDimension]
+ImageType = itk.VectorImage[itk.F, ImageDimension]
 
 filter = itk.Spectra1DAveragingImageFilter[ImageType].New()
 
