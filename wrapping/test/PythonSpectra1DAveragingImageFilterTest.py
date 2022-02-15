@@ -30,8 +30,9 @@ itk.auto_progress(2)
 PixelType = itk.VariableLengthVector[itk.F]
 ImageDimension = 2
 ImageType = itk.VectorImage[itk.F, ImageDimension]
+ImageType2 = itk.VectorImage[itk.F, 2]
 
-filter = itk.Spectra1DAveragingImageFilter[ImageType].New()
+filter = itk.Spectra1DAveragingImageFilter[ImageType, ImageType2].New()
 
 for i, input_filename in enumerate(args.input_image):
     print(f"Reading {input_filename}")
