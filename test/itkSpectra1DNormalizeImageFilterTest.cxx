@@ -57,8 +57,8 @@ compareBuffers(TInImage1 * baseline, TInImage2 * test)
     }
   }
 
-  itk::IdentifierType maxDifferentPixels = std::max<itk::IdentifierType>(10, linePixels / 10);
-  if (differentPixels > maxDifferentPixels) // TODO: we shouldn't allow this
+  itk::IdentifierType maxDifferentPixels = 0;
+  if (differentPixels > maxDifferentPixels)
   {
     itkGenericExceptionMacro(<< differentPixels << " pixels are different, maximum allowed is " << maxDifferentPixels);
   }
