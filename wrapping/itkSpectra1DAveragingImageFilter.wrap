@@ -1,3 +1,20 @@
+# As we are using an unusual combination here, we first need to wrap it for ImageToImageFilter
+itk_wrap_class("itk::ImageToImageFilter" POINTER)
+  foreach(d ${ITK_WRAP_IMAGE_DIMS})
+    if(ITK_WRAP_vector_float AND ITKM_VIF${d} AND ITKM_VIF2)
+      itk_wrap_template("${ITKM_VIF${d}}${ITKM_VIF2}" "${ITKT_VIF${d}},${ITKT_VIF2}")
+    endif()
+    if(ITK_WRAP_vector_double AND ITKM_VID${d} AND ITKM_VID2)
+      itk_wrap_template("${ITKM_VID${d}}${ITKM_VIF2}" "${ITKT_VID${d}},${ITKT_VIF2}")
+    endif()
+    if(ITK_WRAP_vector_float AND ITK_WRAP_vector_double AND ITKM_VIF${d} AND ITKM_VID${d} AND ITKM_VIF2 AND ITKM_VID2)
+      # VectorImage(float) <-> VectorImage(double)
+      itk_wrap_template("${ITKM_VIF${d}}${ITKM_VID2}" "${ITKT_VIF${d}},${ITKT_VID2}")
+      itk_wrap_template("${ITKM_VID${d}}${ITKM_VIF2}" "${ITKT_VID${d}},${ITKT_VIF2}")
+    endif()
+  endforeach()
+itk_end_wrap_class()
+
 itk_wrap_class("itk::Spectra1DAveragingImageFilter" POINTER)
   foreach(d ${ITK_WRAP_IMAGE_DIMS})
     # Only wrap VectorImage, because Image<Vector> is typically only wrapped for 2,3 and 4 components.
