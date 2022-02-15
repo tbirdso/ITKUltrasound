@@ -63,7 +63,26 @@ Spectra1DNormalizeImageFilter<TInputImage, TReferenceImage>::GenerateInputReques
 DeclareVectorDivideOperator(Vector<TScalarA ITK_COMMA VDimension>, VariableLengthVector<TScalarB>);
 DeclareVectorDivideOperator(VariableLengthVector<TScalarA>, Vector<TScalarB ITK_COMMA VDimension>);
 DeclareVectorDivideOperator(Vector<TScalarA ITK_COMMA VDimension>, Vector<TScalarB ITK_COMMA VDimension>);
-DeclareVectorDivideOperator(VariableLengthVector<TScalarA>, VariableLengthVector<TScalarB>);
+
+// VI->VI case needs to be separate, because it does not have compile-time Dimension
+template <typename TScalarA, typename TScalarB>
+VariableLengthVector<TScalarA>
+operator/(const VariableLengthVector<TScalarA> & a, const VariableLengthVector<TScalarB> & b)
+{
+  VariableLengthVector<TScalarA> result{ a };
+
+  itkAssertInDebugAndIgnoreInReleaseMacro(a.GetNumberOfElements() == b.GetNumberOfElements());
+  const unsigned aDimension = a.GetNumberOfElements();
+  for (unsigned i = 0; i < aDimension; ++i)
+  {
+    if (b[i] != 0) /* else implicitly assume b[i] == 1.0 */
+    {
+      result[i] /= b[i];
+    }
+  }
+  return result;
+}
+
 
 template <typename TInputImage, typename TReferenceImage>
 void
