@@ -142,7 +142,7 @@ itkSpectra1DAveragingImageFilterTest(int argc, char * argv[])
   VI1f::Pointer testVI1;
 
   // create reference result - all other images will be compared to this one
-  IV1f::Pointer reference = createReference<IV2f, IV1f>(argc, argv);
+  IV2f::Pointer reference = createReference<IV2f, IV2f>(argc, argv);
 
   // now test different dimensionality
   returnCount += doTest<VI3f, VI2f>(argc, argv, testVI2);

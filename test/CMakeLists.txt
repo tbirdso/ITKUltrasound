@@ -130,7 +130,7 @@ itk_add_test(NAME itkSpectra1DSupportWindowToMaskImageFilterTest2
 itk_add_test(NAME itkSpectra1DAveragingImageFilterTest
   COMMAND UltrasoundTestDriver
     --compare
-    DATA{Baseline/itkSpectra1DAveragingImageFilterTest.mha}
+    DATA{Input/rf_voltage_15_freq_0005000000_2017-5-31_12-36-44_ReferenceSpectrum_side_lines_03_fft1d_size_128.mha}
     ${ITK_TEST_OUTPUT_DIR}/itkSpectra1DAveragingImageFilterTest.mha
   itkSpectra1DAveragingImageFilterTest
     ${ITK_TEST_OUTPUT_DIR}/itkSpectra1DAveragingImageFilterTest.mha
