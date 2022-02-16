@@ -25,9 +25,6 @@ parser.add_argument("-i", "--input-image", action="append", help="Input image(s)
 parser.add_argument("-o", "--output-image", required=True)
 args = parser.parse_args()
 
-print(f"args.input_image: {args.input_image}")
-print(f"args.output_image: {args.output_image}")
-
 itk.auto_progress(2)
 
 PixelType = itk.VariableLengthVector[itk.F]
