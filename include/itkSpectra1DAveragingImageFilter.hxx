@@ -35,16 +35,29 @@ Spectra1DAveragingImageFilter<TInputImage, TOutputImage>::GenerateOutputInformat
 
   input->UpdateOutputInformation();
 
+  constexpr unsigned commonDimension = std::min(InputImageType::ImageDimension, OutputImageType::ImageDimension);
+
   typename OutputImageType::SpacingType outSpacing{ 1.0 }; // 1.0 along all dimensions
-  outSpacing[0] = input->GetSpacing()[0];                  // keep depth spacing
+  for (unsigned d = 0; d < commonDimension; ++d)
+  {
+    outSpacing[d] = input->GetSpacing()[d]; // keep as much spacing information as we can
+  }
+
+  typename OutputImageType::PointType outOrigin{ 0.0 }; // 0.0 along all dimensions
+  for (unsigned d = 0; d < commonDimension; ++d)
+  {
+    outOrigin[d] = input->GetOrigin()[d]; // keep as much origin information as we can
+  }
+
+  // Copying part of the direction matrix is harder and usually not needed. If needed,
+  // we could follow the logic from Modules/Core/Common/include/itkExtractImageFilter.hxx
 
   using OutputRegion = typename OutputImageType::RegionType;
   OutputRegion outRegion{ typename OutputImageType::SizeType::Filled(1) }; // 1-sized along all dimensions
   outRegion.SetSize(0, input->GetLargestPossibleRegion().GetSize(0));      // but keep the depth dimension
 
-  // origin and direction become meaningless when collapsing to just one line
-
   output->SetSpacing(outSpacing);
+  output->SetOrigin(outOrigin);
   output->SetRegions(outRegion);
 
   this->PrepareOutput(input, output);
