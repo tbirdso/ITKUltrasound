@@ -21,14 +21,17 @@ import itk
 import argparse
 
 parser = argparse.ArgumentParser(description="Make an average of spectra along transducer lines.")
-parser.add_argument("-i", "--input-image", nargs="+", action="append", help="Input image(s)", required=True)
+parser.add_argument("-i", "--input-image", action="append", help="Input image(s)", required=True)
 parser.add_argument("-o", "--output-image", required=True)
 args = parser.parse_args()
+
+print(f"args.input_image: {args.input_image}")
+print(f"args.output_image: {args.output_image}")
 
 itk.auto_progress(2)
 
 PixelType = itk.VariableLengthVector[itk.F]
-ImageDimension = 2
+ImageDimension = 3
 ImageType = itk.VectorImage[itk.F, ImageDimension]
 ImageType2 = itk.VectorImage[itk.F, 2]
 
@@ -36,7 +39,10 @@ filter = itk.Spectra1DAveragingImageFilter[ImageType, ImageType2].New()
 
 for i, input_filename in enumerate(args.input_image):
     print(f"Reading {input_filename}")
-    image = itk.imread(input_filename, PixelType)
+    reader = itk.ImageFileReader[ImageType].New()
+    reader.SetFileName(input_filename)
+    reader.Update()
+    image = reader.GetOutput()
     filter.SetInput(i, image)
 
 print("Executing the filter")
