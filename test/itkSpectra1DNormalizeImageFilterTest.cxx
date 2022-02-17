@@ -45,8 +45,8 @@ compareBuffers(TInImage1 * baseline, TInImage2 * test)
 
   using InputPixelType1 = typename TInImage1::PixelType;
   using InputPixelType2 = typename TInImage2::PixelType;
-  auto *              bufferBaseline = static_cast<InputPixelType1 *>(baseline->GetBufferPointer());
-  auto *              bufferTest = static_cast<InputPixelType2 *>(test->GetBufferPointer());
+  auto * bufferBaseline = static_cast<InputPixelType1 *>(baseline->GetBufferPointer());
+  auto * bufferTest = static_cast<InputPixelType2 *>(test->GetBufferPointer());
   for (itk::IdentifierType p = 0; p < pixelCount; ++p)
   {
     for (unsigned d = 0; d < TInImage1::PixelType::Dimension; ++d)
@@ -97,7 +97,7 @@ createReference(const char * inFileName, const char * refFileName, const char * 
   using AverageFilterType = itk::Spectra1DNormalizeImageFilter<TInImage, TReferenceImage>;
   auto averageFilter = AverageFilterType::New();
 
-  auto inImage = itk::ReadImage<TInImage>(inFileName);
+  auto       inImage = itk::ReadImage<TInImage>(inFileName);
   const auto refImage = itk::ReadImage<TReferenceImage>(refFileName);
 
   averageFilter->SetInput(inImage);
