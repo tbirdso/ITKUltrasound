@@ -55,8 +55,8 @@ Spectra1DAveragingImageFilter<TInputImage, TOutputImage>::GenerateOutputInformat
   using OutputRegionType = typename OutputImageType::RegionType;
   using OutputSizeType = typename OutputRegionType::SizeType;
 
-  OutputRegionType outRegion{ OutputSizeType::Filled(1) }; // 1-sized along all dimensions
-  outRegion.SetSize(0, input->GetLargestPossibleRegion().GetSize(0));      // but keep the depth dimension
+  OutputRegionType outRegion{ OutputSizeType::Filled(1) };            // 1-sized along all dimensions
+  outRegion.SetSize(0, input->GetLargestPossibleRegion().GetSize(0)); // but keep the depth dimension
 
   output->SetSpacing(outSpacing);
   output->SetOrigin(outOrigin);

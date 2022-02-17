@@ -82,7 +82,7 @@ protected:
   VerifyInputInformation() const override
   {}
 
-  
+
   using InputVectorImage = VectorImage<InputScalarType, InputImageDimension>;
   using OutputVectorImage = VectorImage<OutputScalarType, OutputImageDimension>;
 
