@@ -88,21 +88,21 @@ protected:
 
   // sets the vector length if output is a VectorImage
   template <typename TIn, typename TOut>
-  std::enable_if_t<!std::is_same_v<OutputImageType, VectorImage<OutputScalarType, TOut::ImageDimension>>>
+  std::enable_if_t<!std::is_same<OutputImageType, VectorImage<OutputScalarType, TOut::ImageDimension>>::value>
   PrepareOutput(TIn *, TOut *)
   {
     // nothing to do if output is not a VectorImage
   }
   template <typename TIn, typename TOut>
-  std::enable_if_t<!std::is_same_v<InputImageType, VectorImage<InputScalarType, TIn::ImageDimension>> &&
-                   std::is_same_v<OutputImageType, VectorImage<OutputScalarType, TOut::ImageDimension>>>
+  std::enable_if_t<!std::is_same<InputImageType, VectorImage<InputScalarType, TIn::ImageDimension>>::value &&
+                   std::is_same<OutputImageType, VectorImage<OutputScalarType, TOut::ImageDimension>>::value>
   PrepareOutput(TIn * in, TOut * out)
   {
     this->GetOutput()->SetVectorLength(TIn::PixelType::Dimension);
   }
   template <typename TIn, typename TOut>
-  std::enable_if_t<std::is_same_v<InputImageType, VectorImage<InputScalarType, TIn::ImageDimension>> &&
-                   std::is_same_v<OutputImageType, VectorImage<OutputScalarType, TOut::ImageDimension>>>
+  std::enable_if_t<std::is_same<InputImageType, VectorImage<InputScalarType, TIn::ImageDimension>>::value &&
+                   std::is_same<OutputImageType, VectorImage<OutputScalarType, TOut::ImageDimension>>::value>
   PrepareOutput(TIn * in, TOut * out)
   {
     this->GetOutput()->SetVectorLength(in->GetVectorLength());
