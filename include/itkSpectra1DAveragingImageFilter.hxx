@@ -52,8 +52,10 @@ Spectra1DAveragingImageFilter<TInputImage, TOutputImage>::GenerateOutputInformat
   // Copying part of the direction matrix is harder and usually not needed. If needed,
   // we could follow the logic from Modules/Core/Common/include/itkExtractImageFilter.hxx
 
-  using OutputRegion = typename OutputImageType::RegionType;
-  OutputRegion outRegion{ typename OutputImageType::SizeType::Filled(1) }; // 1-sized along all dimensions
+  using OutputRegionType = typename OutputImageType::RegionType;
+  using OutputSizeType = typename OutputRegionType::SizeType;
+
+  OutputRegionType outRegion{ OutputSizeType::Filled(1) }; // 1-sized along all dimensions
   outRegion.SetSize(0, input->GetLargestPossibleRegion().GetSize(0));      // but keep the depth dimension
 
   output->SetSpacing(outSpacing);
@@ -173,7 +175,7 @@ Spectra1DAveragingImageFilter<TInputImage, TOutputImage>::GenerateData()
   // divide by the number of contributing lines
   using DividerType =
     itk::DivideImageFilter<OutputImageType, itk::Image<IdentifierType, OutputImageDimension>, OutputImageType>;
-  DividerType::Pointer divider = DividerType::New();
+  typename DividerType::Pointer divider = DividerType::New();
   divider->SetInput1(output);
   divider->SetConstant2(lineCount);
   divider->SetInPlace(true);

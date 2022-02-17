@@ -42,8 +42,11 @@ compareBuffers(TInImage1 * baseline, TInImage2 * test)
   itk::IdentifierType differentPixels = 0;
   itk::IdentifierType linePixels = baseline->GetLargestPossibleRegion().GetSize()[0];
   itk::IdentifierType lineCount = pixelCount / linePixels;
-  auto *              bufferBaseline = static_cast<TInImage1::PixelType *>(baseline->GetBufferPointer());
-  auto *              bufferTest = static_cast<TInImage2::PixelType *>(test->GetBufferPointer());
+
+  using InputPixelType1 = typename TInImage1::PixelType;
+  using InputPixelType2 = typename TInImage2::PixelType;
+  auto *              bufferBaseline = static_cast<InputPixelType1 *>(baseline->GetBufferPointer());
+  auto *              bufferTest = static_cast<InputPixelType2 *>(test->GetBufferPointer());
   for (itk::IdentifierType p = 0; p < pixelCount; ++p)
   {
     for (unsigned d = 0; d < TInImage1::PixelType::Dimension; ++d)
@@ -69,14 +72,14 @@ int
 doTest(int argc, char * argv[], itk::SmartPointer<TOutImage> & output)
 {
   using AverageFilterType = itk::Spectra1DAveragingImageFilter<TInImage, TOutImage>;
-  AverageFilterType::Pointer averageFilter = AverageFilterType::New();
+  typename AverageFilterType::Pointer averageFilter = AverageFilterType::New();
 
   itk::SimpleFilterWatcher watcher(averageFilter);
 
   for (int i = 2; i < argc; ++i)
   {
     using ReaderType = itk::ImageFileReader<TInImage>;
-    ReaderType::Pointer reader = ReaderType::New();
+    typename ReaderType::Pointer reader = ReaderType::New();
     reader->SetFileName(argv[i]);
     averageFilter->SetInput(i - 2, reader->GetOutput());
 
@@ -99,7 +102,7 @@ createReference(int argc, char * argv[])
   for (int i = 2; i < argc; ++i)
   {
     using ReaderType = itk::ImageFileReader<TInImage>;
-    ReaderType::Pointer reader = ReaderType::New();
+    typename ReaderType::Pointer reader = ReaderType::New();
     reader->SetFileName(argv[i]);
     averageFilter->SetInput(i - 2, reader->GetOutput());
 

@@ -42,8 +42,11 @@ compareBuffers(TInImage1 * baseline, TInImage2 * test)
   itk::IdentifierType differentPixels = 0;
   itk::IdentifierType linePixels = baseline->GetLargestPossibleRegion().GetSize()[0];
   itk::IdentifierType lineCount = pixelCount / linePixels;
-  auto *              bufferBaseline = static_cast<TInImage1::PixelType *>(baseline->GetBufferPointer());
-  auto *              bufferTest = static_cast<TInImage2::PixelType *>(test->GetBufferPointer());
+
+  using InputPixelType1 = typename TInImage1::PixelType;
+  using InputPixelType2 = typename TInImage2::PixelType;
+  auto *              bufferBaseline = static_cast<InputPixelType1 *>(baseline->GetBufferPointer());
+  auto *              bufferTest = static_cast<InputPixelType2 *>(test->GetBufferPointer());
   for (itk::IdentifierType p = 0; p < pixelCount; ++p)
   {
     for (unsigned d = 0; d < TInImage1::PixelType::Dimension; ++d)
@@ -132,14 +135,14 @@ itkSpectra1DNormalizeImageFilterTest(int argc, char * argv[])
   using VI2f = itk::VectorImage<float, 2>;
   using VI1f = itk::VectorImage<float, 1>;
 
-  IV2f::Pointer testIV2;
-  VI3f::Pointer testVI3;
-  VI2f::Pointer testVI2;
-  VI2d::Pointer testVI2d;
-  IV2d::Pointer testIV2d;
+  typename IV2f::Pointer testIV2;
+  typename VI3f::Pointer testVI3;
+  typename VI2f::Pointer testVI2;
+  typename VI2d::Pointer testVI2d;
+  typename IV2d::Pointer testIV2d;
 
   // create reference result - all other images will be compared to this one
-  IV2f::Pointer reference = createReference<IV2f, IV1f>(inFileName, refFileName, outFileName);
+  typename IV2f::Pointer reference = createReference<IV2f, IV1f>(inFileName, refFileName, outFileName);
 
   // now test different dimensionality
   returnCount += doTest<VI3f, VI2f>(inFileName, refFileName, outFileName, testVI3);
