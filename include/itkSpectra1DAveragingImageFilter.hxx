@@ -90,6 +90,28 @@ operator+(const VariableLengthVector<TScalarA> & a, const Vector<TScalarB, VDime
   return result;
 }
 
+template <typename TScalarA, typename TScalarB, unsigned VDimension>
+Vector<TScalarA, VDimension>&
+operator+=(Vector<TScalarA, VDimension> & a, const VariableLengthVector<TScalarB> & b)
+{
+  for (unsigned i = 0; i < VDimension; ++i)
+  {
+    a[i] += b[i];
+  }
+  return a;
+}
+
+template <typename TScalarA, typename TScalarB, unsigned VDimension>
+VariableLengthVector<TScalarA>&
+operator+=(VariableLengthVector<TScalarA> & a, const Vector<TScalarB, VDimension> & b)
+{
+  for (unsigned i = 0; i < VDimension; ++i)
+  {
+    a[i] += b[i];
+  }
+  return a;
+}
+
 
 template <typename TInputImage, typename TOutputImage>
 void
@@ -159,7 +181,7 @@ Spectra1DAveragingImageFilter<TInputImage, TOutputImage>::GenerateData()
           ind1[0] = iIt.GetIndex()[0]; // set the index along the depth dimension
 
           OutputPixelType p = output->GetPixel(ind1);
-          p = p + iIt.Get();
+          p += iIt.Get();
           output->SetPixel(ind1, p);
 
           ++iIt;

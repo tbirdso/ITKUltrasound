@@ -32,7 +32,7 @@ ImageDimension = 3
 ImageType = itk.VectorImage[itk.F, ImageDimension]
 ImageType2 = itk.VectorImage[itk.F, 2]
 
-filter = itk.Spectra1DAveragingImageFilter[ImageType, ImageType2].New()
+average_filter = itk.Spectra1DAveragingImageFilter[ImageType, ImageType2].New()
 
 for i, input_filename in enumerate(args.input_image):
     print(f"Reading {input_filename}")
@@ -40,12 +40,12 @@ for i, input_filename in enumerate(args.input_image):
     reader.SetFileName(input_filename)
     reader.Update()
     image = reader.GetOutput()
-    filter.SetInput(i, image)
+    average_filter.SetInput(i, image)
 
 print("Executing the filter")
-filter.Update()
+average_filter.Update()
 
 print(f"Writing resulting image into file: {args.output_image}")
-itk.imwrite(filter.GetOutput(), args.output_image, compression=True)
+itk.imwrite(average_filter.GetOutput(), args.output_image, compression=True)
 
 print("Test finished")
