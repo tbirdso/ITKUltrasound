@@ -42,7 +42,7 @@ Spectra1DNormalizeImageFilter<TInputImage, TReferenceImage>::GenerateInputReques
 
 #define DeclareVectorDivideOperator(TypeA, TypeB)                      \
   template <typename TScalarA, typename TScalarB, unsigned VDimension> \
-  TypeA operator/(const TypeA & a, const TypeB & b)                    \
+  explicit TypeA operator/(const TypeA & a, const TypeB & b)                    \
   {                                                                    \
     TypeA result{ a };                                                 \
     for (unsigned i = 0; i < VDimension; ++i)                          \
